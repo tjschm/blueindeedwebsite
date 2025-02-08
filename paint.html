@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Blue, Indeed - Make our next album cover!</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    header {
+      background: #333;
+      color: #fff;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    nav {
+      background: #444;
+      overflow: auto;
+    }
+    nav ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      text-align: center;
+    }
+    nav ul li {
+      display: inline-block;
+    }
+    nav ul li a {
+      display: inline-block;
+      padding: 10px 20px;
+      color: #fff;
+      text-decoration: none;
+    }
+    nav ul li a:hover {
+      background: #555;
+    }
+    main {
+      padding: 20px;
+    }
+    #toolbar {
+      background: #ddd;
+      padding: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+    #toolbar label {
+      margin-right: 5px;
+    }
+    #toolbar button, #toolbar input {
+      padding: 5px 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tool {
+      background: #fff;
+      border: 1px solid #aaa;
+    }
+    .tool.active {
+      background: #bbb;
+    }
+    #canvas {
+      background: #fff;
+      display: block;
+      margin: 15px auto;
+      border: 1px solid #000;
+    }
+    footer {
+      background: #333;
+      color: #fff;
+      text-align: center;
+      padding: 10px 20px;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Blue, Indeed</h1>
+  </header>
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="albums.html">Albums</a></li>
+      <li><a href="shows.html">Upcoming Shows</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="paint.html">Make our next album cover!</a></li>
+    </ul>
+  </nav>
+  <main>
+    <h2></h2>
+    <div id="toolbar">
+      <label>Tool:</label>
+      <button id="brush" class="tool active">Brush</button>
+      <button id="line" class="tool">Line</button>
+      <button id="rectangle" class="tool">Rectangle</button>
+      <button id="circle" class="tool">Circle</button>
+      <button id="spray" class="tool">Spray</button>
+      <button id="eraser" class="tool">Eraser</button>
+      <label for="color">Color:</label>
+      <input type="color" id="color" value="#000000">
+      <label for="brushSize">Brush Size:</label>
+      <input type="range" id="brushSize" min="1" max="50" value="5">
+      <label for="fillShape">Fill Shape:</label>
+      <input type="checkbox" id="fillShape">
+      <button id="clear">Clear</button>
+      <button id="download">Download</button>
+    </div>
+    <canvas id="canvas" width="800" height="600"></canvas>
+  </main>
+  <footer>
+    <p>&copy; 2025 Blue, Indeed. All Rights Reserved.</p>
+  </footer>
+  <script>
+    // Get references to DOM elements
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('color');
+    const brushSizeSlider = document.getElementById('brushSize');
+    const fillShapeCheckbox = document.getElementById('fillShape');
+    const clearButton = document.getElementById('clear');
+    const downloadButton = document.getElementById('download');
+
+    // Tool buttons
+    const toolButtons = document.querySelectorAll('.tool');
+    const brushButton = document.getElementById('brush');
+    const lineButton = document.getElementById('line');
+    const rectangleButton = document.getElementById('rectangle');
+    const circleButton = document.getElementById('circle');
+    const sprayButton = document.getElementById('spray');
+    const eraserButton = document.getElementById('eraser');
+
+    // Default settings
+    let currentTool = 'brush';
+    let drawing = false;
+    let startX = 0;
+    let startY = 0;
+    let snapshot = null;
+
+    // Setup tool button event listeners and active class toggle
+    toolButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        toolButtons.forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        currentTool = this.id;
+      });
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      drawing = true;
+      startX = e.offsetX;
+      startY = e.offsetY;
+      ctx.lineWidth = brushSizeSlider.value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+
+      if (currentTool === 'brush' || currentTool === 'eraser' || currentTool === 'spray') {
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+      } else {
+        snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!drawing) return;
+      const x = e.offsetX;
+      const y = e.offsetY;
+
+      if (currentTool === 'brush') {
+        ctx.strokeStyle = colorPicker.value;
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      } else if (currentTool === 'eraser') {
+        ctx.strokeStyle = "#fff";
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      } else if (currentTool === 'line') {
+        ctx.putImageData(snapshot, 0, 0);
+        ctx.strokeStyle = colorPicker.value;
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+      } else if (currentTool === 'rectangle') {
+        ctx.putImageData(snapshot, 0, 0);
+        ctx.strokeStyle = colorPicker.value;
+        ctx.fillStyle = colorPicker.value;
+        const rectWidth = x - startX;
+        const rectHeight = y - startY;
+        if (fillShapeCheckbox.checked) {
+          ctx.fillRect(startX, startY, rectWidth, rectHeight);
+        } else {
+          ctx.strokeRect(startX, startY, rectWidth, rectHeight);
+        }
+      } else if (currentTool === 'circle') {
+        ctx.putImageData(snapshot, 0, 0);
+        ctx.strokeStyle = colorPicker.value;
+        ctx.fillStyle = colorPicker.value;
+        const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+        if (fillShapeCheckbox.checked) {
+          ctx.fill();
+        } else {
+          ctx.stroke();
+        }
+      } else if (currentTool === 'spray') {
+        ctx.fillStyle = colorPicker.value;
+        const density = 50;
+        const sprayRadius = brushSizeSlider.value;
+        for (let i = 0; i < density; i++) {
+          const offsetX = Math.random() * (sprayRadius * 2) - sprayRadius;
+          const offsetY = Math.random() * (sprayRadius * 2) - sprayRadius;
+          ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      drawing = false;
+      snapshot = null;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      drawing = false;
+    });
+
+    clearButton.addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    downloadButton.addEventListener('click', () => {
+      const dataURL = canvas.toDataURL('image/png');
+      const a = document.createElement('a');
+      a.href = dataURL;
+      a.download = 'painting.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  </script>
+</body>
+</html>
